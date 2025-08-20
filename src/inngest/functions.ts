@@ -11,7 +11,7 @@ export const helloWorld = inngest.createFunction(
       model: openai({
         model: "gemini-1.5-flash-8b", // ✅ Free-tier Gemini model
         apiKey: process.env.GEMINI_API_KEY, // store in .env
-        baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai/", 
+        baseUrl: process.env.base_url, 
       }),
     });
 
