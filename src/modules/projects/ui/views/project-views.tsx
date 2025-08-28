@@ -1,25 +1,41 @@
 "use client"
 
-import { useTRPC } from "@/trpc/client";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import {
+        ResizableHandle,
+        ResizablePanel,
+        ResizablePanelGroup
+} from "@/components/ui/resizable"
+import { MessagesContainer } from "../components/messages-container";
+import { Suspense } from "react";
+import { Loader2, MessageSquare, Eye } from "lucide-react";
 
-interface props{
-        projectId:string
+interface Props {
+        projectId: string
 }
 
-export const ProjectViews=({projectId}:props)=>{
-        const trpc = useTRPC();
-        const {data:project} = useSuspenseQuery(trpc.projects.getOne.queryOptions({
-                id: projectId,
-        }));    
-        const {data:messages} = useSuspenseQuery(trpc.messages.getMany.queryOptions({
-                projectId:projectId
-        }));  
-
+export const ProjectViews = ({ projectId }: Props) => {  
         return (
-                <div>
-                        {JSON.stringify(project)}
-                        {JSON.stringify(messages,null,2)}
+                <div className="h-screen w-full">
+                        <ResizablePanelGroup direction="horizontal" className="h-full">
+                                <ResizablePanel 
+                                        defaultSize={35}
+                                        minSize={20}
+                                        className="flex flex-col h-full"
+                                >
+                                        <Suspense fallback={<div>Loading Messages...</div>}>
+                                           <MessagesContainer projectId={projectId}/>
+                                    </Suspense>
+                                </ResizablePanel>
+
+                                <ResizableHandle withHandle />
+
+                                <ResizablePanel
+                                        defaultSize={65}
+                                        minSize={50}
+                                >
+                                    TODO:Preview
+                                </ResizablePanel>
+                        </ResizablePanelGroup>
                 </div>
         )
 };

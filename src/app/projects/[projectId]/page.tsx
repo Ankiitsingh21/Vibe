@@ -1,6 +1,7 @@
 import { ProjectViews } from "@/modules/projects/ui/views/project-views";
 import { getQueryClient ,trpc } from "@/trpc/server";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
+import { Suspense } from "react";
 
 interface pageProps{
         params: Promise<{
@@ -11,18 +12,16 @@ interface pageProps{
 const page= async ({params}:pageProps)=>{
         const {projectId} = await params;
         const queryClient =  getQueryClient();
-        void queryClient.prefetchQuery(trpc.projects.getMany.queryOptions(
-                {
-                projectId:projectId
-        }
-        ));
+        void queryClient.prefetchQuery(trpc.projects.getMany.queryOptions());
         void queryClient.prefetchQuery(trpc.projects.getOne.queryOptions({
                id: projectId,
         }));
 
         return (
                 <HydrationBoundary state={dehydrate(queryClient)} >
-                        <ProjectViews projectId={projectId}/>
+                        <Suspense fallback={<div>Loading...</div>}> 
+                           <ProjectViews projectId={projectId}/>
+                        </Suspense>
                 </HydrationBoundary>
         )
 }

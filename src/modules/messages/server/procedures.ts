@@ -7,8 +7,7 @@ export const messagesRouter = createTRPCRouter({
   getMany: baseProcedure
   .input(
       z.object({
-        value: z.string().min(1, { message: "Message is required" }).max(10000, { message: "Value is too long" }),
-        projectId: z.string().min(1,{message: "Project ID is required"}),
+        projectId: z.string().min(1, { message: "Project ID is required" }),
       }),
     )
   .query(async ({input}) => {
@@ -16,8 +15,11 @@ export const messagesRouter = createTRPCRouter({
       where:{
         projectId: input.projectId,
       },
+      include:{
+        fragment:true
+      },
       orderBy: {
-        updatedAt: "desc",
+        updatedAt: "asc",
       },
     });
     return messages;
