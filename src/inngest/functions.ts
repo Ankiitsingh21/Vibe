@@ -1,7 +1,13 @@
 // src/inngest/functions.ts - CORRECT syntax for Inngest v3.40.1
 
 import { Sandbox } from "@e2b/code-interpreter";
-import { openai, createAgent, createTool, createNetwork, type Tool } from "@inngest/agent-kit";
+import {
+  openai,
+  createAgent,
+  createTool,
+  createNetwork,
+  type Tool,
+} from "@inngest/agent-kit";
 import { z } from "zod";
 
 import { PROMPT } from "@/prompt";
@@ -9,13 +15,13 @@ import { inngest } from "./client";
 import { getSandbox, lastAssistantTextMessageContent } from "./utils";
 import { prisma } from "@/lib/db";
 
-interface AgentState{
-  summary:string,
-  files:{[path:string]:string}
+interface AgentState {
+  summary: string;
+  files: { [path: string]: string };
 }
 
 export const CodeAgentFunction = inngest.createFunction(
-  { 
+  {
     id: "code-agent",
     // ✅ OPTION 1: Use the correct timeout object syntax
     timeouts: { start: "15m" },
@@ -33,15 +39,18 @@ export const CodeAgentFunction = inngest.createFunction(
     });
 
     // Heartbeat mechanism to keep sandbox alive
-    const heartbeatInterval = setInterval(async () => {
-      try {
-        const sandbox = await getSandbox(sandboxId);
-        await sandbox.commands.run("echo 'heartbeat'");
-        console.log("💓 Sandbox heartbeat sent");
-      } catch (error) {
-        console.warn("⚠️ Heartbeat failed:", error);
-      }
-    }, 2 * 60 * 1000); // Every 2 minutes
+    const heartbeatInterval = setInterval(
+      async () => {
+        try {
+          const sandbox = await getSandbox(sandboxId);
+          await sandbox.commands.run("echo 'heartbeat'");
+          console.log("💓 Sandbox heartbeat sent");
+        } catch (error) {
+          console.warn("⚠️ Heartbeat failed:", error);
+        }
+      },
+      2 * 60 * 1000,
+    ); // Every 2 minutes
 
     try {
       const codeAgent = createAgent<AgentState>({
@@ -66,7 +75,7 @@ export const CodeAgentFunction = inngest.createFunction(
                 try {
                   console.log(`🔧 Executing command: ${command}`);
                   const sandbox = await getSandbox(sandboxId);
-                  
+
                   const result = await sandbox.commands.run(command, {
                     onStdout: (data: string) => {
                       buffers.stdout += data;
@@ -94,27 +103,33 @@ export const CodeAgentFunction = inngest.createFunction(
                 z.object({
                   path: z.string(),
                   content: z.string(),
-                })
+                }),
               ),
             }),
-            handler: async ({ files }, { step, network }: Tool.Options<AgentState> ) => {
-              const newFiles = await step?.run("createOrUpdateFiles", async () => {
-                try {
-                  console.log(`📝 Creating/updating ${files.length} files`);
-                  const updatedFiles = network.state.data.files || {};
-                  const sandbox = await getSandbox(sandboxId);
-                  
-                  for (const file of files) {
-                    await sandbox.files.write(file.path, file.content);
-                    updatedFiles[file.path] = file.content;
-                    console.log(`✅ File updated: ${file.path}`);
+            handler: async (
+              { files },
+              { step, network }: Tool.Options<AgentState>,
+            ) => {
+              const newFiles = await step?.run(
+                "createOrUpdateFiles",
+                async () => {
+                  try {
+                    console.log(`📝 Creating/updating ${files.length} files`);
+                    const updatedFiles = network.state.data.files || {};
+                    const sandbox = await getSandbox(sandboxId);
+
+                    for (const file of files) {
+                      await sandbox.files.write(file.path, file.content);
+                      updatedFiles[file.path] = file.content;
+                      console.log(`✅ File updated: ${file.path}`);
+                    }
+                    return updatedFiles;
+                  } catch (error) {
+                    console.error("❌ File operation failed:", error);
+                    return "Error" + error;
                   }
-                  return updatedFiles;
-                } catch (error) {
-                  console.error("❌ File operation failed:", error);
-                  return "Error" + error;
-                }
-              });
+                },
+              );
 
               if (typeof newFiles === "object") {
                 network.state.data.files = newFiles;
@@ -149,7 +164,8 @@ export const CodeAgentFunction = inngest.createFunction(
         ],
         lifecycle: {
           onResponse: async ({ result, network }) => {
-            const lastAssistantMessageText = lastAssistantTextMessageContent(result);
+            const lastAssistantMessageText =
+              lastAssistantTextMessageContent(result);
             if (lastAssistantMessageText && network) {
               if (lastAssistantMessageText.includes("<task_summary>")) {
                 network.state.data.summary = lastAssistantMessageText;
@@ -175,16 +191,16 @@ export const CodeAgentFunction = inngest.createFunction(
 
       console.log("🤖 Starting AI agent processing...");
       const startTime = Date.now();
-      
+
       const result = await network.run(event.data.value);
-      
+
       const endTime = Date.now();
       const processingTime = (endTime - startTime) / 1000;
       console.log(`⏱️ AI processing completed in ${processingTime}s`);
 
-      const isError = 
+      const isError =
         !result.state.data.summary ||
-         Object.keys(result.state.data.files || {}).length === 0;
+        Object.keys(result.state.data.files || {}).length === 0;
 
       const sandboxUrl = await step.run("get_sandbox_url", async () => {
         try {
@@ -201,41 +217,45 @@ export const CodeAgentFunction = inngest.createFunction(
       });
 
       await step.run("save-result", async () => {
-        if(isError){
+        if (isError) {
           console.log("❌ Saving error result");
           return await prisma.message.create({
-            data:{
-              content:"The agent failed to complete the task. Please try again.",
-              role:"ASSISTANT",
-              type:"ERROR",
-            }
-          })
+            data: {
+              projectId: event.data.projectId,
+              content:
+                "The agent failed to complete the task. Please try again.",
+              role: "ASSISTANT",
+              type: "ERROR",
+            },
+          });
         }
-        
+
         const files = result.state.data.files || {};
-        const summary = result.state.data.summary || "Task completed successfully";
-        
+        const summary =
+          result.state.data.summary || "Task completed successfully";
+
         console.log("💾 Saving successful result:", {
           summary,
           filesCount: Object.keys(files).length,
           sandboxUrl,
-          processingTime: `${processingTime}s`
+          processingTime: `${processingTime}s`,
         });
-        
+
         return await prisma.message.create({
-          data:{
+          data: {
+            projectId: event.data.projectId,
             content: summary,
-            role:"ASSISTANT",
-            type:"RESULT",
-            fragment:{
-              create:{
+            role: "ASSISTANT",
+            type: "RESULT",
+            fragment: {
+              create: {
                 sandboxUrl: sandboxUrl,
                 title: "Generated Application",
                 files: files,
               },
-            }
-          }
-        })
+            },
+          },
+        });
       });
 
       console.log("🎉 Task completed successfully!");
@@ -247,10 +267,9 @@ export const CodeAgentFunction = inngest.createFunction(
         summary: result.state.data.summary,
         processingTime: `${processingTime}s`,
       };
-
     } finally {
       clearInterval(heartbeatInterval);
       console.log("🧹 Heartbeat cleanup completed");
     }
-  }
+  },
 );

@@ -8,7 +8,7 @@ export async function getSandbox(sandboxId: string) {
 
 export function lastAssistantTextMessageContent(result: AgentResult) {
   const lastAssistantTextMessageIndex = result.output.findLastIndex(
-    (message) => message.role === "assistant"
+    (message) => message.role === "assistant",
   );
 
   const message = result.output[lastAssistantTextMessageIndex] as
