@@ -4,7 +4,24 @@ import { generateSlug } from "random-word-slugs";
 // import { Content } from "next/font/google";
 import { z } from "zod";
 import { inngest } from "@/inngest/client";
+import { TRPCError } from "@trpc/server";
 export const projectsRouter = createTRPCRouter({
+   getOne: baseProcedure
+   .input(z.object({
+      id:z.string().min(1,{message: "Project ID is required"}),
+    }))
+   .query(async (input) => {
+    const projects = await prisma.project.findUnique({
+      where:{
+        id: input.input.id,
+      },
+    });
+
+    if(!projects){
+      throw new TRPCError({code: "NOT_FOUND", message: "Project not found" });
+    }
+    return projects;
+  }),
   getMany: baseProcedure.query(async () => {
     const projects = await prisma.project.findMany({
       orderBy: {
