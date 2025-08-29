@@ -1,41 +1,48 @@
-"use client"
+"use client";
 
 import {
-        ResizableHandle,
-        ResizablePanel,
-        ResizablePanelGroup
-} from "@/components/ui/resizable"
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable";
 import { MessagesContainer } from "../components/messages-container";
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 import { Loader2, MessageSquare, Eye } from "lucide-react";
+import { Fragment } from "@/generated/prisma";
+import { ProjectHeader } from "../components/project-head";
 
 interface Props {
-        projectId: string
+  projectId: string;
 }
 
-export const ProjectViews = ({ projectId }: Props) => {  
-        return (
-                <div className="h-screen w-full">
-                        <ResizablePanelGroup direction="horizontal" className="h-full">
-                                <ResizablePanel 
-                                        defaultSize={35}
-                                        minSize={20}
-                                        className="flex flex-col h-full"
-                                >
-                                        <Suspense fallback={<div>Loading Messages...</div>}>
-                                           <MessagesContainer projectId={projectId}/>
-                                    </Suspense>
-                                </ResizablePanel>
+export const ProjectViews = ({ projectId }: Props) => {
+  const [activeFragment,setActiveFragment] = useState<Fragment| null>(null);
+  return (
+    <div className="h-screen w-full">
+      <ResizablePanelGroup direction="horizontal" className="h-full">
+        <ResizablePanel
+          defaultSize={35}
+          minSize={20}
+          className="flex flex-col h-full"
+        >
+          <Suspense fallback={<p>Loading... Project</p>} >
+            <ProjectHeader projectId={projectId}/>
+          </Suspense>
+          <Suspense fallback={<div>Loading Messages...</div>}>
+            <MessagesContainer projectId={projectId} 
+             activeFragment={activeFragment}
+              setActiveFragment={setActiveFragment}
 
-                                <ResizableHandle withHandle />
+            />
+          </Suspense>
+        </ResizablePanel>
 
-                                <ResizablePanel
-                                        defaultSize={65}
-                                        minSize={50}
-                                >
-                                    TODO:Preview
-                                </ResizablePanel>
-                        </ResizablePanelGroup>
-                </div>
-        )
+        <ResizableHandle withHandle />
+
+        <ResizablePanel defaultSize={65} minSize={50}>
+          TODO:Preview
+        </ResizablePanel>
+      </ResizablePanelGroup>
+    </div>
+  );
 };
