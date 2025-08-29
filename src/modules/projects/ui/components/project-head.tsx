@@ -38,12 +38,14 @@ export const ProjectHeader=({projectId}:Props)=>{
         const {data:project} = useSuspenseQuery(
                 trpc.projects.getOne.queryOptions({id:projectId})
         )
+
+        const {setTheme ,theme } = useTheme();
         return (
                 <header className="p-2 flex justify-between items-center border-b" >
                         <DropdownMenu>
-                                <DropdownMenuTrigger>
+                                <DropdownMenuTrigger asChild >
                                         <Button variant={"ghost"} size="sm" className="focus-visible:ring-0 hover:bg-transparent hover:opacity-75 transition-opacity pl-2! ">
-                                                <Image src="/logo.svg" alt="vibe" width={18} height={18} />
+                                                <Image src="/logoipsum-401.svg" alt="vibe" width={18} height={18} />
                                                 <span className="text-sm font-medium" >{project.name}</span>
                                                 <ChevronDownIcon/>
                                         </Button>
@@ -57,6 +59,28 @@ export const ProjectHeader=({projectId}:Props)=>{
                                                  </span>
                                                 </Link>
                                         </DropdownMenuItem>
+                                        <DropdownMenuSeparator/>
+                                        <DropdownMenuSub>
+                                                <DropdownMenuSubTrigger className="gap-2" >
+                                                        <SunMoonIcon className="size-4 text-muted-foreground" />
+                                                        <span>Appearence</span>
+                                                </DropdownMenuSubTrigger>
+                                                <DropdownMenuPortal>
+                                                        <DropdownMenuSubContent>
+                                                                <DropdownMenuRadioGroup value={theme} onValueChange={setTheme} >
+                                                                        <DropdownMenuRadioItem value="Light" >
+                                                                                <span>Light</span>
+                                                                        </DropdownMenuRadioItem>
+                                                                         <DropdownMenuRadioItem value="Dark" >
+                                                                                <span>Dark</span>
+                                                                        </DropdownMenuRadioItem>
+                                                                         <DropdownMenuRadioItem value="system" >
+                                                                                <span>System</span>
+                                                                        </DropdownMenuRadioItem>
+                                                                </DropdownMenuRadioGroup>
+                                                        </DropdownMenuSubContent>
+                                                </DropdownMenuPortal>
+                                        </DropdownMenuSub>
                                 </DropdownMenuContent>
                         </DropdownMenu>
                 </header>
