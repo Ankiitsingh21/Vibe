@@ -19,7 +19,7 @@ interface Props {
 export const CodeView = ({ code, lang }: Props) => {
   useEffect(() => {
     Prism.highlightAll();
-  }, [code, lang]);
+  }, [code]);
 
   return (
     <pre className="p-4 bg-transparent border-none rounded-none m-0 text-xs sm:text-sm overflow-auto h-full w-full">
