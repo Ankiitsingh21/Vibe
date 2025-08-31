@@ -12,16 +12,23 @@ interface Props {
   setActiveFragment: (fragment: Fragment | null) => void;
 }
 
-export const MessagesContainer = ({ projectId, activeFragment, setActiveFragment }: Props) => {
+export const MessagesContainer = ({
+  projectId,
+  activeFragment,
+  setActiveFragment,
+}: Props) => {
   const bottomRef = useRef<HTMLDivElement>(null);
   const trpc = useTRPC();
 
   const { data: messages } = useSuspenseQuery(
-    trpc.messages.getMany.queryOptions({
-      projectId: projectId,
-    }, {
-      refetchInterval: 5000,
-    })
+    trpc.messages.getMany.queryOptions(
+      {
+        projectId: projectId,
+      },
+      {
+        refetchInterval: 5000,
+      },
+    ),
   );
 
   useEffect(() => {
@@ -52,7 +59,7 @@ export const MessagesContainer = ({ projectId, activeFragment, setActiveFragment
           <div ref={bottomRef} />
         </div>
       </div>
-      
+
       {/* Fixed form at bottom */}
       <div className="shrink-0 relative px-3 pb-3 pt-1">
         <div className="pointer-events-none absolute -top-6 left-0 right-0 h-6 bg-gradient-to-b from-transparent to-background/70" />
