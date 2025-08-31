@@ -9,41 +9,31 @@ import { MessageLoading } from "./message-loading";
 interface Props {
   projectId: string;
   activeFragment: Fragment | null;
-  setActiveFragment: (fragment:Fragment|null)=>void;
+  setActiveFragment: (fragment: Fragment | null) => void;
 }
 
-export const MessagesContainer = ({ projectId ,activeFragment ,setActiveFragment}: Props) => {
+export const MessagesContainer = ({ projectId, activeFragment, setActiveFragment }: Props) => {
   const bottomRef = useRef<HTMLDivElement>(null);
   const trpc = useTRPC();
 
   const { data: messages } = useSuspenseQuery(
     trpc.messages.getMany.queryOptions({
       projectId: projectId,
-    },{
+    }, {
       refetchInterval: 5000,
-    },)
+    })
   );
-
-  // useEffect(() => {
-  //   const lastAssistantMessageWithFragment = messages.findLast(
-  //     (message) => message.role === "ASSISTANT" && !!message.fragment,
-  //   );
-  //   if (lastAssistantMessageWithFragment) {
-  //     setActiveFragment(lastAssistantMessageWithFragment.fragment)
-  //   }
-  // }, [messages,setActiveFragment]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length]);
 
-
   const lastMessage = messages[messages.length - 1];
   const isLastMessageFromUser = lastMessage?.role === "USER";
 
-
   return (
     <div className="flex flex-col h-full">
+      {/* Scrollable messages area */}
       <div className="flex-1 overflow-y-auto">
         <div className="pt-4 pr-1">
           {messages.map((message) => (
@@ -58,11 +48,13 @@ export const MessagesContainer = ({ projectId ,activeFragment ,setActiveFragment
               type={message.type}
             />
           ))}
-          {isLastMessageFromUser&& <MessageLoading/>}
+          {isLastMessageFromUser && <MessageLoading />}
           <div ref={bottomRef} />
         </div>
       </div>
-      <div className="relative px-3 pb-3 pt-1">
+      
+      {/* Fixed form at bottom */}
+      <div className="shrink-0 relative px-3 pb-3 pt-1">
         <div className="pointer-events-none absolute -top-6 left-0 right-0 h-6 bg-gradient-to-b from-transparent to-background/70" />
         <MessageForm projectId={projectId} />
       </div>

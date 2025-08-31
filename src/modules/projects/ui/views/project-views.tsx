@@ -7,7 +7,6 @@ import {
 } from "@/components/ui/resizable";
 import { MessagesContainer } from "../components/messages-container";
 import { Suspense, useState } from "react";
-import { Loader2, MessageSquare, Eye } from "lucide-react";
 import { Fragment } from "@/generated/prisma";
 import { ProjectHeader } from "../components/project-head";
 import { FragmentWeb } from "../components/fragment-web";
@@ -17,7 +16,8 @@ interface Props {
 }
 
 export const ProjectViews = ({ projectId }: Props) => {
-  const [activeFragment,setActiveFragment] = useState<Fragment| null>(null);
+  const [activeFragment, setActiveFragment] = useState<Fragment | null>(null);
+  
   return (
     <div className="h-screen w-full">
       <ResizablePanelGroup direction="horizontal" className="h-full">
@@ -26,16 +26,23 @@ export const ProjectViews = ({ projectId }: Props) => {
           minSize={20}
           className="flex flex-col h-full"
         >
-          <Suspense fallback={<p>Loading... Project</p>} >
-            <ProjectHeader projectId={projectId}/>
-          </Suspense>
-          <Suspense fallback={<div>Loading Messages...</div>}>
-            <MessagesContainer projectId={projectId} 
-             activeFragment={activeFragment}
-              setActiveFragment={setActiveFragment}
-
-            />
-          </Suspense>
+          {/* Fixed header - doesn't scroll */}
+          <div className="shrink-0">
+            <Suspense fallback={<div className="p-2 border-b">Loading...</div>}>
+              <ProjectHeader projectId={projectId} />
+            </Suspense>
+          </div>
+          
+          {/* Scrollable messages area */}
+          <div className="flex-1 min-h-0">
+            <Suspense fallback={<div>Loading Messages...</div>}>
+              <MessagesContainer 
+                projectId={projectId} 
+                activeFragment={activeFragment}
+                setActiveFragment={setActiveFragment}
+              />
+            </Suspense>
+          </div>
         </ResizablePanel>
 
         <ResizableHandle withHandle />
