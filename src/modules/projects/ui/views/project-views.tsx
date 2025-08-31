@@ -52,7 +52,7 @@ export const ProjectViews = ({ projectId }: Props) => {
           </div>
         </ResizablePanel>
 
-        <ResizableHandle withHandle />
+        <ResizableHandle className="hover:bg-primary transition-colors" />
 
         <ResizablePanel defaultSize={65} minSize={50} className="flex flex-col">
           <Tabs 
