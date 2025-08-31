@@ -58,7 +58,7 @@ export const CodeAgentFunction = inngest.createFunction(
         description: "An expert coding Agent",
         system: PROMPT,
         model: openai({
-          model: "gemini-2.5-flash",
+          model: "gemini-2.5-pro",
           apiKey: process.env.GEMINI_API_KEY,
           baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai/",
         }),
