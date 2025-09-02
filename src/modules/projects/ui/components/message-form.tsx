@@ -29,7 +29,7 @@ export const MessageForm = ({ projectId }: Props) => {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [isFocused, setIsFocused] = useState(false);
-  const {data:usage} = useQuery(trpc.Usage.status.queryOptions());
+  const { data: usage } = useQuery(trpc.Usage.status.queryOptions());
   // console.log("usage", usage);
   const showUsage = !!usage;
   const form = useForm<z.infer<typeof formSchema>>({
@@ -48,14 +48,12 @@ export const MessageForm = ({ projectId }: Props) => {
             projectId,
           }),
         );
-        queryClient.invalidateQueries(
-          trpc.Usage.status.queryOptions()
-        );
+        queryClient.invalidateQueries(trpc.Usage.status.queryOptions());
       },
       onError: (error) => {
         toast.error(error.message);
-        if(error.data?.code === "TOO_MANY_REQUESTS" ){
-          router.push("/pricing")
+        if (error.data?.code === "TOO_MANY_REQUESTS") {
+          router.push("/pricing");
         }
       },
     }),
@@ -73,7 +71,10 @@ export const MessageForm = ({ projectId }: Props) => {
   return (
     <Form {...form}>
       {showUsage && (
-        <Usage points={usage.remainingPoints} msBeforeNext={usage.msBeforeNext} />
+        <Usage
+          points={usage.remainingPoints}
+          msBeforeNext={usage.msBeforeNext}
+        />
       )}
       <form
         onSubmit={form.handleSubmit(onSubmit)}

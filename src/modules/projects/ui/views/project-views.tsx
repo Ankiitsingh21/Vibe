@@ -18,14 +18,15 @@ import Link from "next/link";
 import { FileExplorer } from "@/components/file-explorer";
 import { UserControl } from "@/components/user-control";
 import { useAuth } from "@clerk/nextjs";
+import { ErrorBoundary } from "react-error-boundary";
 
 interface Props {
   projectId: string;
 }
 
 export const ProjectViews = ({ projectId }: Props) => {
-  const {has} = useAuth();
-  const hasPro = has?.({plan:"pro"})
+  const { has } = useAuth();
+  const hasPro = has?.({ plan: "pro" });
   const [activeFragment, setActiveFragment] = useState<Fragment | null>(null);
   const [tabState, setTabState] = useState<"preview" | "code">("preview");
 
@@ -39,30 +40,36 @@ export const ProjectViews = ({ projectId }: Props) => {
         >
           {/* Fixed header - doesn't scroll */}
           <div className="shrink-0">
-            <Suspense fallback={<div className="p-2 border-b">Loading...</div>}>
-              <ProjectHeader projectId={projectId} />
-            </Suspense>
+            <ErrorBoundary fallback={<p>project header error!</p>}>
+              <Suspense
+                fallback={<div className="p-2 border-b">Loading...</div>}
+              >
+                <ProjectHeader projectId={projectId} />
+              </Suspense>
+            </ErrorBoundary>
           </div>
 
           {/* Scrollable messages area */}
           <div className="flex-1 min-h-0">
-            <Suspense fallback={<div>Loading Messages...</div>}>
-              <MessagesContainer
-                projectId={projectId}
-                activeFragment={activeFragment}
-                setActiveFragment={setActiveFragment}
-              />
-            </Suspense>
+            <ErrorBoundary fallback={<p>Message Container error!</p>}>
+              <Suspense fallback={<div>Loading Messages...</div>}>
+                <MessagesContainer
+                  projectId={projectId}
+                  activeFragment={activeFragment}
+                  setActiveFragment={setActiveFragment}
+                />
+              </Suspense>
+            </ErrorBoundary>
           </div>
         </ResizablePanel>
 
         <ResizableHandle className="hover:bg-primary transition-colors" />
 
         <ResizablePanel defaultSize={65} minSize={50} className="flex flex-col">
-          <Tabs 
-            className="flex flex-col h-full" 
-            defaultValue="preview" 
-            value={tabState} 
+          <Tabs
+            className="flex flex-col h-full"
+            defaultValue="preview"
+            value={tabState}
             onValueChange={(value) => setTabState(value as "preview" | "code")}
           >
             {/* Fixed tabs header */}
@@ -80,13 +87,13 @@ export const ProjectViews = ({ projectId }: Props) => {
               <div className="ml-auto flex items-center gap-x-2">
                 {!hasPro && (
                   <Button size={"sm"} asChild variant={"tertiary"}>
-                  <Link href={"/pricing"}>
-                    <CrownIcon className="w-4 h-4 mr-1" />
-                    Upgrade
-                  </Link>
-                </Button>
+                    <Link href={"/pricing"}>
+                      <CrownIcon className="w-4 h-4 mr-1" />
+                      Upgrade
+                    </Link>
+                  </Button>
                 )}
-                <UserControl/>
+                <UserControl />
               </div>
             </div>
 
@@ -95,10 +102,12 @@ export const ProjectViews = ({ projectId }: Props) => {
               <TabsContent value="preview" className="h-full m-0">
                 {!!activeFragment && <FragmentWeb data={activeFragment} />}
               </TabsContent>
-              
+
               <TabsContent value="code" className="h-full m-0">
                 {!!activeFragment?.files && (
-                  <FileExplorer files={activeFragment.files as {[path:string]:string}} />
+                  <FileExplorer
+                    files={activeFragment.files as { [path: string]: string }}
+                  />
                 )}
               </TabsContent>
             </div>

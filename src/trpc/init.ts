@@ -4,11 +4,10 @@ import { cache } from "react";
 import superjson from "superjson";
 
 export const createTRPCContext = cache(async () => {
- 
   return { auth: await auth() };
 });
 
-export type Context = Awaited<ReturnType<typeof createTRPCContext>>
+export type Context = Awaited<ReturnType<typeof createTRPCContext>>;
 
 // Avoid exporting the entire t object
 const t = initTRPC.context<Context>().create({
@@ -18,19 +17,19 @@ const t = initTRPC.context<Context>().create({
   transformer: superjson,
 });
 
-const isAuthed = t.middleware(({next,ctx})=>{
-  if(!ctx.auth.userId){
+const isAuthed = t.middleware(({ next, ctx }) => {
+  if (!ctx.auth.userId) {
     throw new TRPCError({
-      code:"UNAUTHORIZED",
-      message:"Not authenticated",
-    })
+      code: "UNAUTHORIZED",
+      message: "Not authenticated",
+    });
   }
   return next({
-    ctx:{
-      auth:ctx.auth
-    }
-  })
-})
+    ctx: {
+      auth: ctx.auth,
+    },
+  });
+});
 
 // Base router and procedure helpers
 export const createTRPCRouter = t.router;

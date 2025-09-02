@@ -1,4 +1,4 @@
-import {  createTRPCRouter, protectedProcedure } from "@/trpc/init";
+import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 import { prisma } from "@/lib/db";
 // import { Content } from "next/font/google";
 import { z } from "zod";
@@ -12,13 +12,13 @@ export const messagesRouter = createTRPCRouter({
         projectId: z.string().min(1, { message: "Project ID is required" }),
       }),
     )
-    .query(async ({ input ,ctx}) => {
+    .query(async ({ input, ctx }) => {
       const messages = await prisma.message.findMany({
         where: {
           projectId: input.projectId,
-          project:{
-            userId:ctx.auth.userId
-          }
+          project: {
+            userId: ctx.auth.userId,
+          },
         },
         include: {
           fragment: true,
@@ -39,26 +39,34 @@ export const messagesRouter = createTRPCRouter({
         projectId: z.string().min(1, { message: "Project ID is required" }),
       }),
     )
-    .mutation(async ({ input,ctx }) => {
-
+    .mutation(async ({ input, ctx }) => {
       const existingproject = await prisma.project.findUnique({
-        where:{
-          id:input.projectId,
-          userId:ctx.auth.userId
-        }
-      })
+        where: {
+          id: input.projectId,
+          userId: ctx.auth.userId,
+        },
+      });
 
-      if(!existingproject){
-        throw new TRPCError({code:"NOT_FOUND", message:"Project not found"})
+      if (!existingproject) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Project not found",
+        });
       }
 
       try {
         await consumeCredits();
       } catch (error) {
-        if(error instanceof Error){
-          throw new TRPCError({code :"BAD_REQUEST" , message:"Something went wrong"})
-        }else{
-          throw new TRPCError({code : "TOO_MANY_REQUESTS",message:"You have run out of credits"})
+        if (error instanceof Error) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Something went wrong",
+          });
+        } else {
+          throw new TRPCError({
+            code: "TOO_MANY_REQUESTS",
+            message: "You have run out of credits",
+          });
         }
       }
 

@@ -2,6 +2,7 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
 import { type TreeItem } from "@/types";
+import { Message } from "@inngest/agent-kit";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -17,7 +18,7 @@ export function cn(...inputs: ClassValue[]) {
  * Output: [["src", "Button.tsx"], "README.md"]
  */
 export function convertFilesToTreeItems(
-  files: Record<string, string>
+  files: Record<string, string>,
 ): TreeItem[] {
   // Define proper type for tree structure
   interface TreeNode {
@@ -79,3 +80,16 @@ export function convertFilesToTreeItems(
   const result = convertNode(tree);
   return Array.isArray(result) ? result : [result];
 }
+
+export const generateFragmentTitle = (value: Message[]) => {
+  const op = value[0];
+  if (op.type !== "text") {
+    return "Fragemnt";
+  }
+
+  if (Array.isArray(op.content)) {
+    return op.content.map((text) => text).join("");
+  } else {
+    return op.content;
+  }
+};

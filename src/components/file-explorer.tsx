@@ -4,7 +4,12 @@
 import { TreeItem } from "@/types";
 import { convertFilesToTreeItems } from "@/lib/utils";
 import { useState } from "react";
-import { ChevronRightIcon, ChevronDownIcon, FileIcon, FolderIcon } from "lucide-react";
+import {
+  ChevronRightIcon,
+  ChevronDownIcon,
+  FileIcon,
+  FolderIcon,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -23,20 +28,20 @@ interface TreeNodeProps {
   parentPath?: string;
 }
 
-const TreeNode = ({ 
-  item, 
-  level, 
-  onFileSelect, 
-  selectedFile, 
-  expandedFolders, 
+const TreeNode = ({
+  item,
+  level,
+  onFileSelect,
+  selectedFile,
+  expandedFolders,
   onToggleFolder,
-  parentPath = "" 
+  parentPath = "",
 }: TreeNodeProps) => {
   if (typeof item === "string") {
     // File
     const fullPath = parentPath ? `${parentPath}/${item}` : item;
     const isSelected = selectedFile === fullPath;
-    
+
     return (
       <Button
         variant="ghost"
@@ -44,7 +49,7 @@ const TreeNode = ({
         className={cn(
           "w-full justify-start text-left h-auto py-1 px-2 font-normal",
           "hover:bg-accent/50",
-          isSelected && "bg-accent text-accent-foreground"
+          isSelected && "bg-accent text-accent-foreground",
         )}
         style={{ paddingLeft: `${(level + 1) * 12 + 8}px` }}
         onClick={() => onFileSelect(fullPath)}
@@ -99,13 +104,15 @@ const TreeNode = ({
 
 export const FileExplorer = ({ files }: Props) => {
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
-  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
-  
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
+    new Set(),
+  );
+
   const treeItems = convertFilesToTreeItems(files);
   const selectedFileContent = selectedFile ? files[selectedFile] : null;
 
   const handleToggleFolder = (path: string) => {
-    setExpandedFolders(prev => {
+    setExpandedFolders((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(path)) {
         newSet.delete(path);

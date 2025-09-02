@@ -3,7 +3,7 @@ import { createTRPCRouter } from "../init";
 import { messagesRouter } from "@/modules/messages/server/procedures";
 import { usageRouter } from "@/modules/usage/server/procedures";
 export const appRouter = createTRPCRouter({
-  Usage:usageRouter,
+  Usage: usageRouter,
   messages: messagesRouter,
   projects: projectsRouter,
   //  fragments : fragmentRouter,

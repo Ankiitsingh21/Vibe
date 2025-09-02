@@ -32,18 +32,19 @@ export const MessagesContainer = ({
     ),
   );
 
-  useEffect(()=>{
+  useEffect(() => {
     const lastAssistantMessage = messages.findLast(
-      (message)=>message.role === "ASSISTANT"
+      (message) => message.role === "ASSISTANT",
     );
 
-    if(
-      lastAssistantMessage?.fragment && lastAssistantMessage.id!== lastAssistantMessageIdRef.current
-    ){
+    if (
+      lastAssistantMessage?.fragment &&
+      lastAssistantMessage.id !== lastAssistantMessageIdRef.current
+    ) {
       setActiveFragment(lastAssistantMessage.fragment);
-      lastAssistantMessageIdRef.current=lastAssistantMessage.id;
+      lastAssistantMessageIdRef.current = lastAssistantMessage.id;
     }
-  },[messages,setActiveFragment])
+  }, [messages, setActiveFragment]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });

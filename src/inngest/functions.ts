@@ -7,13 +7,16 @@ import {
   createTool,
   createNetwork,
   type Tool,
+  Message,
+  createState,
 } from "@inngest/agent-kit";
 import { z } from "zod";
 
-import { PROMPT } from "@/prompt";
+import { FRAGMENT_TITLE_PROMPT, PROMPT, RESPONSE_PROMPT } from "@/prompt";
 import { inngest } from "./client";
 import { getSandbox, lastAssistantTextMessageContent } from "./utils";
 import { prisma } from "@/lib/db";
+import { generateFragmentTitle } from "@/lib/utils";
 
 interface AgentState {
   summary: string;
@@ -23,20 +26,51 @@ interface AgentState {
 export const CodeAgentFunction = inngest.createFunction(
   {
     id: "code-agent",
-    // ✅ OPTION 1: Use the correct timeout object syntax
-    timeouts: { start: "15m" },
   },
   { event: "code-agent/run" },
   async ({ event, step }) => {
     // Create sandbox with extended timeout
     const sandboxId = await step.run("get_sandbox_id", async () => {
       console.log("🚀 Creating sandbox with extended timeout...");
-      const sandbox = await Sandbox.create("vibe-nextjs-test-2025", {
-        timeoutMs: 20 * 60 * 1000, // 20 minutes
-      });
-      console.log(`✅ Sandbox created: ${sandbox.sandboxId}`);
+      const sandbox = await Sandbox.create("vibe-nextjs-test-2025");
+      await sandbox.setTimeout(1000 * 60 * 15);
+
       return sandbox.sandboxId;
     });
+
+    const previousMessages = await step.run(
+      "get-previous-messages",
+      async () => {
+        const formatMessages: Message[] = [];
+        const fetchMessages = await prisma.message.findMany({
+          where: {
+            projectId: event.data.projectId,
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+          take: 5,
+        });
+        for (const message of fetchMessages) {
+          formatMessages.push({
+            type: "text",
+            role: message.role === "ASSISTANT" ? "assistant" : "user",
+            content: message.content,
+          });
+        }
+        return formatMessages.reverse();
+      },
+    );
+
+    const state = createState<AgentState>(
+      {
+        summary: "",
+        files: {},
+      },
+      {
+        messages: previousMessages,
+      },
+    );
 
     // Heartbeat mechanism to keep sandbox alive
     const heartbeatInterval = setInterval(
@@ -58,7 +92,7 @@ export const CodeAgentFunction = inngest.createFunction(
         description: "An expert coding Agent",
         system: PROMPT,
         model: openai({
-          model: "gemini-2.5-flash",
+          model: "gemini-2.5-pro",
           apiKey: process.env.GEMINI_API_KEY,
           baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai/",
         }),
@@ -180,6 +214,7 @@ export const CodeAgentFunction = inngest.createFunction(
         name: "coding_agent_network",
         agents: [codeAgent],
         maxIter: 20,
+        defaultState: state,
         router: async ({ network }) => {
           const summary = network.state.data.summary;
           if (summary) {
@@ -192,7 +227,35 @@ export const CodeAgentFunction = inngest.createFunction(
       console.log("🤖 Starting AI agent processing...");
       const startTime = Date.now();
 
-      const result = await network.run(event.data.value);
+      const result = await network.run(event.data.value, { state });
+
+      const fragmentTitleGenerator = createAgent({
+        name: "fragment_title_generator",
+        description: "A Fragment title genearator",
+        system: FRAGMENT_TITLE_PROMPT,
+        model: openai({
+          model: "gemini-1.5-flash",
+          apiKey: process.env.GEMINI_API_KEY,
+          baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai/",
+        }),
+      });
+      const ResponseGenerator = createAgent({
+        name: "response_generator",
+        description: "A response genearator",
+        system: RESPONSE_PROMPT,
+        model: openai({
+          model: "gemini-1.5-flash",
+          apiKey: process.env.GEMINI_API_KEY,
+          baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai/",
+        }),
+      });
+
+      const { output: fragmentTitle } = await fragmentTitleGenerator.run(
+        result.state.data.summary,
+      );
+      const { output: response } = await ResponseGenerator.run(
+        result.state.data.summary,
+      );
 
       const endTime = Date.now();
       const processingTime = (endTime - startTime) / 1000;
@@ -244,13 +307,13 @@ export const CodeAgentFunction = inngest.createFunction(
         return await prisma.message.create({
           data: {
             projectId: event.data.projectId,
-            content: summary,
+            content: generateFragmentTitle(response),
             role: "ASSISTANT",
             type: "RESULT",
             fragment: {
               create: {
                 sandboxUrl: sandboxUrl,
-                title: "Generated Application",
+                title: generateFragmentTitle(fragmentTitle),
                 files: files,
               },
             },

@@ -2,6 +2,7 @@ import { ProjectViews } from "@/modules/projects/ui/views/project-views";
 import { getQueryClient, trpc } from "@/trpc/server";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { Suspense } from "react";
+import { ErrorBoundary } from "react-error-boundary";
 
 interface pageProps {
   params: Promise<{
@@ -21,9 +22,11 @@ const page = async ({ params }: pageProps) => {
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <Suspense fallback={<div>Loading...</div>}>
-        <ProjectViews projectId={projectId} />
-      </Suspense>
+      <ErrorBoundary fallback={<p>Error!</p>}>
+        <Suspense fallback={<div>Loading...</div>}>
+          <ProjectViews projectId={projectId} />
+        </Suspense>
+      </ErrorBoundary>
     </HydrationBoundary>
   );
 };

@@ -3,14 +3,13 @@ import { prisma } from "./db";
 import { auth } from "@clerk/nextjs/server";
 
 export async function getUsageTracker() {
-
-        const {has} = await auth();
-        const hasPremiumAccess = has({plan:"pro"})
-        console.log(hasPremiumAccess);
+  const { has } = await auth();
+  const hasPremiumAccess = has({ plan: "pro" });
+  console.log(hasPremiumAccess);
   const usageTracker = new RateLimiterPrisma({
     storeClient: prisma,
     tableName: "Usage",
-    points: !hasPremiumAccess?5:100, // total free credits
+    points: !hasPremiumAccess ? 5 : 100, // total free credits
     duration: 30 * 24 * 60 * 60, // 30 days
   });
   return usageTracker;
